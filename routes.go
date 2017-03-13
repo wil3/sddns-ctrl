@@ -13,15 +13,22 @@ type Routes []Route
 
 var routes = Routes{
 	Route{
-		"Rule",
+		"Boot",
 		"GET",
 		"/rule/",
-		GetRule,
+		GetBootNode,
 	},
 	Route{
-		"Rule",
+		"Assign",
 		"GET",
 		"/rule/{clientToken}",
 		GetRule,
+	},
+
+	Route{
+		"Join",
+		"POST",
+		"/join",
+		Join,
 	},
 }
