@@ -80,6 +80,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	labels := strings.Split(domain, ".")
+	log.Printf("label len: %d", len(labels))
 	if len(labels) != Context.DomainTokenLen {
 		log.Println("Not found")
 		http.NotFound(w, r)
