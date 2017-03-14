@@ -48,8 +48,6 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 	rule = defaultRule
 	rule.Ipv4 = dstIP
 
-	log.Printf("Decode %s\n", base36decode("xpm"))
-
 	respondWithRule(w, rule)
 	return
 }
