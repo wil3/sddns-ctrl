@@ -12,5 +12,4 @@ func RepoGetAllIPs() []string {
 		ips = append(ips, node.IP)
 	}
 	return ips
-
 }

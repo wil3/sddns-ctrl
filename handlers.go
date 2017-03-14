@@ -1,18 +1,21 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	//	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
-	"log"
-	"strings"
-	"time"
-
-	//	"crypto/aes"
-	//	"crypto/cipher"
 	"github.com/gorilla/mux"
 	"github.com/wil3/sddns"
+	"log"
 	"math/big"
 	"math/rand"
+	"net"
 	"net/http"
+	"strings"
+	"time"
 )
 
 var defaultRule = sddns.Rule{
@@ -21,6 +24,8 @@ var defaultRule = sddns.Rule{
 	Ttl:         120,
 	Timeout:     600,
 }
+var LEN_IV = 12
+var LEN_TAG = 16
 
 func GetBootNode(w http.ResponseWriter, r *http.Request) {
 	//Do some logic to determine what IP address the client should be sent to
@@ -48,20 +53,33 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 
 //GET request
 func GetRule(w http.ResponseWriter, r *http.Request) {
+	if len(Nodes) == 0 {
+		log.Fatal("No nodes have joined yet!")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
 	//Vars are the tokens in the URL we specify in routes
 	vars := mux.Vars(r)
 	var rule sddns.Rule
 
 	//TODO verify token
+	token := vars["clientToken"]
+	ip, id, err := parseToken(token)
+	if err != nil {
+		log.Fatalf("Could not parse token %v", err)
+		return
+	}
 
 	//If there is no token the client just bootstrapped into the system
 	//if _, ok := vars["clientToken"]; ok {
-	log.Printf("Client has token \"%s\"", vars["clientToken"])
+	log.Printf("Client has token \"%s\"", token)
+	log.Printf("IP \"%s\" ID \"%s\"", ip, id)
 
 	//	decryptToken(vars["clientToken"])
 	rule = defaultRule
-	rule.Ipv4 = RepoGetAllIPs()[0]
-	notifyNode()
+	targetNode := Nodes[0]
+	rule.Ipv4 = targetNode.IP
+	notifyNode(targetNode)
 	respondWithRule(w, rule)
 	return
 
@@ -76,10 +94,49 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/**
+ * Return the ip, id or error if something went wrong
+ */
+func parseToken(token string) (string, string, error) {
+
+	base16 := base36decode(token)
+	b := make([]byte, hex.DecodedLen(len(base16)))
+	n, err := hex.Decode(b, []byte(base16))
+	if err != nil {
+		return "", "", err
+	}
+
+	log.Printf("Hex token\n %s", hex.Dump(b[:n]))
+	iv := b[:LEN_IV]
+	tag := b[LEN_IV : LEN_IV+LEN_TAG]
+	ciphertext := b[LEN_IV+LEN_TAG:]
+
+	ctAndTag := append(ciphertext, tag...)
+
+	log.Printf("IV %s TAG %s CT %s", hex.Dump(iv), hex.Dump(tag), hex.Dump(ciphertext))
+	plaintext, err := decryptToken([]byte(Context.Key), iv, ctAndTag)
+	if err != nil {
+		return "", "", err
+	}
+
+	log.Printf("Plaintext %s", hex.Dump(plaintext))
+
+	id := base64.StdEncoding.EncodeToString(plaintext[4:])
+
+	var ip net.IP
+	ip = plaintext[:4]
+	//ip := make(net.IP, 4)
+
+	//binary.BigEndian.PutUint32(ip, nn)
+
+	return ip.String(), id, nil
+}
+
 /*
  * This is where we till the agent that they should accept this request
+ * Reading posts in nginx was causing trouble so data is sent as a GET
  */
-func notifyNode() {
+func notifyNode(n Node) {
 
 }
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
@@ -91,35 +148,38 @@ func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 }
 func base36decode(s string) string {
 	i := new(big.Int)
-	i.SetString(s, 16)
-
-	return i.Text(36)
+	i.SetString(s, 36)
+	return i.Text(16)
 }
 
-/*
-func decryptToken(token string) (ip string, id string, err error) {
+func decryptToken(key []byte, iv []byte, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	aesgcm, err := cipher.NewGCM(block)
+	aesgcm, err := cipher.NewGCMWithNonceSize(block, LEN_IV)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
+	}
+	//This package wants the tag part of the ciphertext
+	//such that the tag is appended
+	plaintext, err := aesgcm.Open(nil, iv, ciphertext, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		panic(err.Error())
-	}
+	return plaintext, nil
 }
-*/
+
 func Join(w http.ResponseWriter, r *http.Request) {
 	log.Println("Join request")
+	r.ParseForm()
+	pk := r.Form.Get("pk")
 	//TODO verify request
 	ip := strings.Split(r.RemoteAddr, ":")[0]
-	log.Printf("Remote address %s\n", ip)
-	var n = Node{IP: ip}
+	log.Printf("Server joined: Remote address %s\t PK:%s\n", ip, pk)
+	var n = Node{IP: ip, PK: pk}
 	RepoInsertNode(n)
 	return
 }
