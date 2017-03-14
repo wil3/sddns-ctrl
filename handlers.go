@@ -58,7 +58,8 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 	//	decryptToken(vars["clientToken"])
 	rule = defaultRule
-
+	rule.Ipv4 = RepoGetAllIPs()[0]
+	notifyNode()
 	respondWithRule(w, rule)
 	return
 
@@ -73,6 +74,12 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 }
 
+/*
+ * This is where we till the agent that they should accept this request
+ */
+func notifyNode() {
+
+}
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -106,6 +113,7 @@ func decryptToken(token string) (ip string, id string, err error) {
 }
 */
 func Join(w http.ResponseWriter, r *http.Request) {
+	log.Println("Join request")
 	//TODO verify request
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	log.Printf("Remote address %s\n", ip)
