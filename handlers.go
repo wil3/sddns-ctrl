@@ -75,11 +75,13 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Domain received \"%s\"", domain)
 	if strings.Compare(domain, Context.AppDomain) == 0 {
 		//Boot
+		log.Println("Booting client")
 		GetBootNode(w, r)
 	}
 
 	labels := strings.Split(domain, ".")
 	if len(labels) != Context.DomainTokenLen {
+		log.Println("Not found")
 		http.NotFound(w, r)
 		return
 	}
