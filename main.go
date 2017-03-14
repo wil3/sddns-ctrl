@@ -9,9 +9,11 @@ import (
 )
 
 type Config struct {
-	Key    string
-	Port   int
-	Domain string
+	Key            string
+	Port           int
+	Domain         string
+	DomainTokenLen int
+	AppDomain      string
 }
 
 var Context = Config{}

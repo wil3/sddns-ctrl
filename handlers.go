@@ -70,7 +70,23 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	var rule sddns.Rule
 
 	//TODO verify token
-	token := vars["clientToken"]
+	domain := vars["clientToken"]
+
+	log.Printf("Domain received \"%s\"", domain)
+	if strings.Compare(domain, Context.AppDomain) == 0 {
+		//Boot
+		GetBootNode(w, r)
+	}
+
+	labels := strings.Split(domain, ".")
+	if len(labels) != Context.DomainTokenLen {
+		http.NotFound(w, r)
+		return
+	}
+	token := labels[0]
+	log.Printf("Labels %v\n", labels)
+	log.Printf("Client has token \"%s\"", token)
+
 	ip, id, err := parseToken(token)
 	if err != nil {
 		log.Fatalf("Could not parse token %v", err)
@@ -79,7 +95,6 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 	//If there is no token the client just bootstrapped into the system
 	//if _, ok := vars["clientToken"]; ok {
-	log.Printf("Client has token \"%s\"", token)
 	log.Printf("IP \"%s\" ID \"%s\"", ip, id)
 
 	//	decryptToken(vars["clientToken"])
