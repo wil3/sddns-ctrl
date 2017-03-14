@@ -31,4 +31,10 @@ var routes = Routes{
 		"/join",
 		Join,
 	},
+	Route{
+		"Alert",
+		"POST",
+		"/alert",
+		Alert,
+	},
 }

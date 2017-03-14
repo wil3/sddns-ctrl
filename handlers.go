@@ -5,8 +5,11 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	//	"encoding/binary"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/wil3/sddns"
 	"log"
@@ -51,6 +54,12 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Alert from one of the nodes
+//
+func Alert(w http.ResponseWriter, r *http.Request) {
+
+}
+
 //GET request
 func GetRule(w http.ResponseWriter, r *http.Request) {
 	if len(Nodes) == 0 {
@@ -78,8 +87,10 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	//	decryptToken(vars["clientToken"])
 	rule = defaultRule
 	targetNode := Nodes[0]
+	c := Client{ID: id, IP: ip, AssignedNode: targetNode}
+	ClientAssignments[id] = c
 	rule.Ipv4 = targetNode.IP
-	notifyNode(targetNode)
+	messageNode(targetNode, c, "allow")
 	respondWithRule(w, rule)
 	return
 
@@ -136,9 +147,26 @@ func parseToken(token string) (string, string, error) {
  * This is where we till the agent that they should accept this request
  * Reading posts in nginx was causing trouble so data is sent as a GET
  */
-func notifyNode(n Node) {
+func messageNode(n Node, c Client, action string) {
 
+	url := fmt.Sprintf("http://%s", Context.Domain)
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	q := req.URL.Query()
+	q.Add("action", action)
+	q.Add("id", c.ID)
+	q.Add("ip", c.IP)
+	req.URL.RawQuery = q.Encode()
+	req.Header.Set("Origin", Context.Domain)
+
+	mac := hmac.New(sha256.New, []byte(Context.Key))
+	message := fmt.Sprintf("%s%s", "GET", q.Encode())
+	mac.Write([]byte(message))
+
+	req.Header.Set("Authorization", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	client.Do(req)
 }
+
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
@@ -176,10 +204,11 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	log.Println("Join request")
 	r.ParseForm()
 	pk := r.Form.Get("pk")
+	host := r.Form.Get("host")
 	//TODO verify request
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	log.Printf("Server joined: Remote address %s\t PK:%s\n", ip, pk)
-	var n = Node{IP: ip, PK: pk}
+	var n = Node{IP: ip, Host: host, PK: pk}
 	RepoInsertNode(n)
 	return
 }

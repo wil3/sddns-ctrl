@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	Key  string
-	Port int
+	Key    string
+	Port   int
+	Domain string
 }
 
 var Context = Config{}
@@ -30,6 +31,7 @@ func main() {
 	router := NewRouter()
 
 	port := fmt.Sprintf(":%d", Context.Port)
+	log.Printf("This servers domain is \"%s\"", Context.Domain)
 	log.Printf("Listening on port %d", Context.Port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
