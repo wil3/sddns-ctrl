@@ -30,7 +30,9 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 	rand.Seed(time.Now().Unix())
 	nodeIPs := RepoGetAllIPs()
 	if len(nodeIPs) == 0 {
-		panic("No nodes have joined yet!")
+		log.Fatal("No nodes have joined yet!")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
 	}
 
 	dstIP := nodeIPs[rand.Intn(len(nodeIPs))]
