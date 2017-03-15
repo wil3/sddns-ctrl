@@ -179,6 +179,7 @@ func messageNode(n Node, c Client, action string) {
 
 	mac := hmac.New(sha256.New, []byte(Context.Key))
 	message := fmt.Sprintf("%s%s", "GET", q.Encode())
+	log.Printf("Message to be signed \"%s\"", message)
 	mac.Write([]byte(message))
 
 	req.Header.Set("Authorization", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
