@@ -167,7 +167,7 @@ func parseToken(token string) (string, string, error) {
  */
 func messageNode(n Node, c Client, action string) {
 
-	url := fmt.Sprintf("http://%s", Context.Domain)
+	url := fmt.Sprintf("http://%s", n.Host)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
 	q := req.URL.Query()
@@ -182,7 +182,11 @@ func messageNode(n Node, c Client, action string) {
 	mac.Write([]byte(message))
 
 	req.Header.Set("Authorization", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
-	client.Do(req)
+	res, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Error messaging node %v", err)
+	}
+	log.Printf("Response from node %d", res.StatusCode)
 }
 
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
