@@ -35,5 +35,7 @@ func main() {
 	port := fmt.Sprintf(":%d", Context.Port)
 	log.Printf("This servers domain is \"%s\"", Context.Domain)
 	log.Printf("Listening on port %d", Context.Port)
+	log.Printf("Token length %d", Context.DomainTokenLen)
+	log.Printf("App Domain %s", Context.AppDomain)
 	log.Fatal(http.ListenAndServe(port, router))
 }

@@ -77,6 +77,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 		//Boot
 		log.Println("Booting client")
 		GetBootNode(w, r)
+		return
 	}
 
 	labels := strings.Split(domain, ".")
@@ -126,14 +127,15 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
  */
 func parseToken(token string) (string, string, error) {
 
-	base16 := base36decode(token)
+	base16 := base36to16(token)
+	log.Printf("B16 %d: %s", hex.DecodedLen(len(base16)), base16)
 	b := make([]byte, hex.DecodedLen(len(base16)))
 	n, err := hex.Decode(b, []byte(base16))
 	if err != nil {
 		return "", "", err
 	}
-
 	log.Printf("Hex token\n %s", hex.Dump(b[:n]))
+
 	iv := b[:LEN_IV]
 	tag := b[LEN_IV : LEN_IV+LEN_TAG]
 	ciphertext := b[LEN_IV+LEN_TAG:]
@@ -190,10 +192,15 @@ func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 		panic(err)
 	}
 }
-func base36decode(s string) string {
+
+func base36to16(s string) string {
 	i := new(big.Int)
 	i.SetString(s, 36)
-	return i.Text(16)
+	b16 := i.Text(16)
+	if len(b16)%2 != 0 {
+		return "0" + b16
+	}
+	return b16
 }
 
 func decryptToken(key []byte, iv []byte, ciphertext []byte) ([]byte, error) {
