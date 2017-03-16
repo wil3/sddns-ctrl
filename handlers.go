@@ -21,6 +21,13 @@ import (
 	"time"
 )
 
+type HoneyApp struct {
+	RealServer  Node
+	HoneyServer Node
+}
+
+var MyHoneyApp HoneyApp
+
 var defaultRule = sddns.Rule{
 	ClientToken: "",
 	Ipv4:        "",
@@ -55,7 +62,19 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 // Alert from one of the nodes
 //
 func Alert(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received alert")
 
+	vars := mux.Vars(r)
+	token := vars["clientToken"]
+	_, id, err := parseToken(token)
+	if err != nil {
+		log.Fatalf("Could not parse token %v", err)
+		return
+	}
+
+	c := ClientAssignments[id]
+	messageNode(c.AssignedNode, c, "block")
+	c.AssignedNode = MyHoneyApp.HoneyServer
 }
 
 //GET request
@@ -161,6 +180,9 @@ func parseToken(token string) (string, string, error) {
 	return ip.String(), id, nil
 }
 
+//TODO The DNS requests are asynchronised, to reduce load on the node, we should
+//track if a request has been made so it isnt repeated.
+
 /*
  * This is where we till the agent that they should accept this request
  * Reading posts in nginx was causing trouble so data is sent as a GET
@@ -238,5 +260,12 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Server joined: Remote address %s\t PK:%s\n", ip, pk)
 	var n = Node{IP: ip, Host: host, PK: pk}
 	RepoInsertNode(n)
+
+	//Set the first joined server as the real server
+	if &MyHoneyApp.RealServer == nil {
+		MyHoneyApp.RealServer = n
+	} else {
+		MyHoneyApp.HoneyServer = n
+	}
 	return
 }

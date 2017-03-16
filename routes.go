@@ -33,8 +33,8 @@ var routes = Routes{
 	},
 	Route{
 		"Alert",
-		"POST",
-		"/alert",
+		"GET",
+		"/alert/{clientToken}",
 		Alert,
 	},
 }
