@@ -120,11 +120,18 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	//if _, ok := vars["clientToken"]; ok {
 	log.Printf("IP \"%s\" ID \"%s\"", ip, id)
 
-	//	decryptToken(vars["clientToken"])
-	rule = defaultRule
-	targetNode := Nodes[0]
-	c := Client{ID: id, IP: ip, AssignedNode: targetNode}
-	ClientAssignments[id] = c
+	//Check if there is already an assignment
+	var targetNode Node
+	var c Client
+	if val, ok := ClientAssignments[id]; ok {
+		targetNode = val.AssignedNode
+		c = val
+	} else {
+		rule = defaultRule
+		targetNode = Nodes[0]
+		c = Client{ID: id, IP: ip, AssignedNode: targetNode}
+		ClientAssignments[id] = c
+	}
 	rule.Ipv4 = targetNode.IP
 	messageNode(targetNode, c, "allow")
 	respondWithRule(w, rule)
