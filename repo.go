@@ -8,7 +8,7 @@ type Client struct {
 	AssignedNode Node
 }
 
-var ClientAssignments = make(map[string]Client)
+var ClientAssignments = make(map[string]*Client)
 
 func RepoInsertNode(node Node) {
 	Nodes = append(Nodes, node)
