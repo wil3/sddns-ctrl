@@ -72,11 +72,14 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := ClientAssignments[id]
-	messageNode(c.AssignedNode, c, "block")
-	p := &c
-	p.AssignedNode = MyHoneyApp.HoneyServer
-	log.Printf("Reassigning client to server \"%s\"", p.AssignedNode.Host)
+	if c, ok := ClientAssignments[id]; ok {
+		messageNode(c.AssignedNode, *c, "block")
+		c.AssignedNode = MyHoneyApp.HoneyServer
+		log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
+
+	} else {
+		log.Println("There is no assignment for \"%s\"", id)
+	}
 }
 
 //GET request
@@ -124,7 +127,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 	//Check if there is already an assignment
 	var targetNode Node
-	var c Client
+	var c *Client
 	if val, ok := ClientAssignments[id]; ok {
 		log.Printf("Already have an assignment for \"%s\", with host \"%s\"", id, val.AssignedNode.Host)
 		targetNode = val.AssignedNode
@@ -133,11 +136,11 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 		log.Println("No assignment, using default")
 		rule = defaultRule
 		targetNode = MyHoneyApp.RealServer
-		c = Client{ID: id, IP: ip, AssignedNode: targetNode}
+		c = &Client{ID: id, IP: ip, AssignedNode: targetNode}
 		ClientAssignments[id] = c
 	}
 	rule.Ipv4 = targetNode.IP
-	messageNode(targetNode, c, "allow")
+	messageNode(targetNode, *c, "allow")
 	respondWithRule(w, rule)
 	return
 
