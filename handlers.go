@@ -26,7 +26,7 @@ type HoneyApp struct {
 	HoneyServer Node
 }
 
-var MyHoneyApp HoneyApp
+var MyHoneyApp = HoneyApp{}
 
 var defaultRule = sddns.Rule{
 	ClientToken: "",
