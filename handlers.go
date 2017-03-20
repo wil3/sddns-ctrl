@@ -73,7 +73,7 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c, ok := ClientAssignments[id]; ok {
-		messageNode(c.AssignedNode, *c, "block")
+		messageNode(c.AssignedNode, c, "block")
 		c.AssignedNode = MyHoneyApp.HoneyServer
 		log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
 
@@ -140,7 +140,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 		ClientAssignments[id] = c
 	}
 	rule.Ipv4 = targetNode.IP
-	messageNode(targetNode, *c, "allow")
+	messageNode(targetNode, c, "allow")
 	respondWithRule(w, rule)
 	return
 
@@ -201,7 +201,7 @@ func parseToken(token string) (string, string, error) {
  * This is where we till the agent that they should accept this request
  * Reading posts in nginx was causing trouble so data is sent as a GET
  */
-func messageNode(n Node, c Client, action string) {
+func messageNode(n Node, c *Client, action string) {
 
 	url := fmt.Sprintf("http://%s", n.Host)
 	client := &http.Client{}
