@@ -271,7 +271,7 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	RepoInsertNode(n)
 
 	//Set the first joined server as the real server
-	if &MyHoneyApp.RealServer == nil {
+	if (HoneyApp{}) == MyHoneyApp {
 		MyHoneyApp.RealServer = n
 		log.Println("Setting joined server as app server")
 	} else {
