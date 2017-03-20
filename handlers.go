@@ -94,7 +94,6 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var rule sddns.Rule
 
-	//TODO verify token
 	domain := vars["clientToken"]
 
 	log.Printf("Domain received \"%s\"", domain)
@@ -115,6 +114,16 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	token := labels[0]
 	log.Printf("Labels %v\n", labels)
 	log.Printf("Client has token \"%s\"", token)
+
+	//FIXME Remove me this is only for benchmarking
+	//So we can bypass cache
+	if len(token) == 10 {
+		//Magic number
+		log.Println("Booting client for benchmark")
+		GetBootNode(w, r)
+		return
+
+	}
 
 	if len(token) < 62 {
 		log.Println("The token is too short")
