@@ -31,7 +31,7 @@ var MyHoneyApp = HoneyApp{}
 var defaultRule = sddns.Rule{
 	ClientToken: "",
 	Ipv4:        "",
-	Ttl:         120,
+	Ttl:         0,
 	Timeout:     600,
 }
 var LEN_IV = 12
@@ -69,6 +69,7 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 	_, id, err := parseToken(token)
 	if err != nil {
 		log.Fatalf("Could not parse token %v", err)
+		http.NotFound(w, r)
 		return
 	}
 
@@ -115,9 +116,17 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Labels %v\n", labels)
 	log.Printf("Client has token \"%s\"", token)
 
+	if len(token) < 62 {
+		log.Println("The token is too short")
+		http.NotFound(w, r)
+		return
+
+	}
+
 	ip, id, err := parseToken(token)
 	if err != nil {
 		log.Fatalf("Could not parse token %v", err)
+		http.NotFound(w, r)
 		return
 	}
 
@@ -225,7 +234,6 @@ func messageNode(n Node, c *Client, action string) {
 	}
 	log.Printf("Response from node %d", res.StatusCode)
 }
-
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
