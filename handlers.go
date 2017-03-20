@@ -74,8 +74,9 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 
 	c := ClientAssignments[id]
 	messageNode(c.AssignedNode, c, "block")
-	c.AssignedNode = MyHoneyApp.HoneyServer
-	log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
+	p := &c
+	p.AssignedNode = MyHoneyApp.HoneyServer
+	log.Printf("Reassigning client to server \"%s\"", p.AssignedNode.Host)
 }
 
 //GET request
@@ -125,7 +126,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	var targetNode Node
 	var c Client
 	if val, ok := ClientAssignments[id]; ok {
-		log.Printf("Already have an assignment for \"%s\", with PK \"%s\"", id, val.AssignedNode.Host)
+		log.Printf("Already have an assignment for \"%s\", with host \"%s\"", id, val.AssignedNode.Host)
 		targetNode = val.AssignedNode
 		c = val
 	} else {
