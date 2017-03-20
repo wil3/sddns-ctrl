@@ -75,6 +75,7 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 	c := ClientAssignments[id]
 	messageNode(c.AssignedNode, c, "block")
 	c.AssignedNode = MyHoneyApp.HoneyServer
+	log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
 }
 
 //GET request
@@ -124,7 +125,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	var targetNode Node
 	var c Client
 	if val, ok := ClientAssignments[id]; ok {
-		log.Println("Already have an assignment for \"%s\", with PK \"%s\"", id, val.AssignedNode.Host)
+		log.Printf("Already have an assignment for \"%s\", with PK \"%s\"", id, val.AssignedNode.Host)
 		targetNode = val.AssignedNode
 		c = val
 	} else {
@@ -266,7 +267,7 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	host := r.Form.Get("host")
 	//TODO verify request
 	ip := strings.Split(r.RemoteAddr, ":")[0]
-	log.Printf("Server joined: Remote address %s\t PK:%s\n", ip, pk)
+	log.Printf("Server joined: Remote address %s\t Host:\"%s\"\t PK:%s\n", ip, host, pk)
 	var n = Node{IP: ip, Host: host, PK: pk}
 	RepoInsertNode(n)
 
