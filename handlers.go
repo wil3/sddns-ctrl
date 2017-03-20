@@ -124,11 +124,13 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	var targetNode Node
 	var c Client
 	if val, ok := ClientAssignments[id]; ok {
+		log.Println("Already have an assignment for \"%s\", with PK \"%s\"", id, val.AssignedNode.Host)
 		targetNode = val.AssignedNode
 		c = val
 	} else {
+		log.Println("No assignment, using default")
 		rule = defaultRule
-		targetNode = Nodes[0]
+		targetNode = MyHoneyApp.RealServer
 		c = Client{ID: id, IP: ip, AssignedNode: targetNode}
 		ClientAssignments[id] = c
 	}
@@ -271,8 +273,10 @@ func Join(w http.ResponseWriter, r *http.Request) {
 	//Set the first joined server as the real server
 	if &MyHoneyApp.RealServer == nil {
 		MyHoneyApp.RealServer = n
+		log.Println("Setting joined server as app server")
 	} else {
 		MyHoneyApp.HoneyServer = n
+		log.Println("Setting joined server as honey server")
 	}
 	return
 }
