@@ -118,9 +118,9 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 	if token == "ns1" {
 		rule = defaultRule
 		rule.Ipv4 = "52.23.144.231"
+		log.Println("Name server query")
 		respondWithRule(w, rule)
 		return
-
 	}
 
 	//FIXME Remove me this is only for benchmarking
