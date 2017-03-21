@@ -125,7 +125,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if len(token) < 62 {
+	if len(token) < 61 {
 		log.Println("The token is too short")
 		http.NotFound(w, r)
 		return
