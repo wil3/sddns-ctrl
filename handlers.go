@@ -64,6 +64,8 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 func Alert(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received alert")
 
+	startNanos := time.Now().UnixNano()
+
 	vars := mux.Vars(r)
 	token := vars["clientToken"]
 	_, id, err := parseToken(token)
@@ -74,10 +76,13 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c, ok := ClientAssignments[id]; ok {
+		startMessageNanos := time.Now().UnixNano()
 		messageNode(c.AssignedNode, c, "block")
 		c.AssignedNode = MyHoneyApp.HoneyServer
 		log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
 
+		lapseTime := (time.Now().UnixNano()-startMessageNanos)/2.0 + (startMessageNanos - startNanos)
+		log.Printf("**Measurement** %f", lapseTime)
 	} else {
 		log.Println("There is no assignment for \"%s\"", id)
 	}
