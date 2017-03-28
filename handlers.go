@@ -77,7 +77,11 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 
 	if c, ok := ClientAssignments[id]; ok {
 		startMessageNanos := time.Now().UnixNano()
-		messageNode(c.AssignedNode, c, "block")
+		err := messageNode(c.AssignedNode, c, "block")
+		if err != nil {
+			return
+		}
+
 		c.AssignedNode = MyHoneyApp.HoneyServer
 		log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
 
@@ -171,7 +175,11 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 		ClientAssignments[id] = c
 	}
 	rule.Ipv4 = targetNode.IP
-	messageNode(targetNode, c, "allow")
+	err = messageNode(targetNode, c, "allow")
+	if err != nil {
+		return
+	}
+
 	respondWithRule(w, rule)
 	return
 
@@ -232,7 +240,7 @@ func parseToken(token string) (string, string, error) {
  * This is where we till the agent that they should accept this request
  * Reading posts in nginx was causing trouble so data is sent as a GET
  */
-func messageNode(n Node, c *Client, action string) {
+func messageNode(n Node, c *Client, action string) error {
 
 	url := fmt.Sprintf("http://%s", n.Host)
 	client := &http.Client{}
@@ -252,9 +260,11 @@ func messageNode(n Node, c *Client, action string) {
 	req.Header.Set("Authorization", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 	res, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error messaging node %v", err)
+		log.Printf("Error messaging node %v", err)
+		return err
 	}
 	log.Printf("Response from node %d", res.StatusCode)
+	return nil
 }
 func respondWithRule(w http.ResponseWriter, rule sddns.Rule) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
