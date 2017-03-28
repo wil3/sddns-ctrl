@@ -82,9 +82,9 @@ func Alert(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Reassigning client to server \"%s\"", c.AssignedNode.Host)
 
 		lapseTime := (time.Now().UnixNano()-startMessageNanos)/2.0 + (startMessageNanos - startNanos)
-		log.Printf("**Measurement** %f", lapseTime)
+		log.Print("**Measurement** ", lapseTime)
 	} else {
-		log.Println("There is no assignment for \"%s\"", id)
+		log.Printf("There is no assignment for \"%s\"", id)
 	}
 }
 
