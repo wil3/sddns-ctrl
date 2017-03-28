@@ -245,6 +245,8 @@ func messageNode(n Node, c *Client, action string) error {
 	url := fmt.Sprintf("http://%s", n.Host)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
+	req.Close = true
+
 	q := req.URL.Query()
 	q.Add("action", action)
 	q.Add("id", c.ID)
@@ -259,10 +261,13 @@ func messageNode(n Node, c *Client, action string) error {
 
 	req.Header.Set("Authorization", base64.StdEncoding.EncodeToString(mac.Sum(nil)))
 	res, err := client.Do(req)
+
 	if err != nil {
 		log.Printf("Error messaging node %v", err)
 		return err
 	}
+	defer res.Body.Close()
+
 	log.Printf("Response from node %d", res.StatusCode)
 	return nil
 }
