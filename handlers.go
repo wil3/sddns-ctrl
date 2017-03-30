@@ -212,10 +212,11 @@ func parseToken(token string) (string, string, error) {
 	log.Printf("Hex length token %d, bytes %d", len(b), n)
 	if n < 40 {
 		//Need to add padding
-		for i := 0; i < 80-len(b); i++ {
+		newLength := n + (40 - len(b))
+		for i := 0; i < 40-len(b); i++ {
 			b = append([]byte{0x00}, b...)
 		}
-		log.Printf("Hex token after padding \n %s", hex.Dump(b[:n]))
+		log.Printf("Hex token after padding \n %s", hex.Dump(b[:newLength]))
 	}
 	iv := b[:LEN_IV]
 	tag := b[LEN_IV : LEN_IV+LEN_TAG]
