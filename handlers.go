@@ -64,6 +64,8 @@ func GetBootNode(w http.ResponseWriter, r *http.Request) {
 func Alert(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received alert")
 
+	//pk := r.Form.Get("pk")
+	//sig := r.Form.Get("sig")
 	startNanos := time.Now().UnixNano()
 
 	vars := mux.Vars(r)
@@ -158,7 +160,7 @@ func GetRule(w http.ResponseWriter, r *http.Request) {
 
 	//If there is no token the client just bootstrapped into the system
 	//if _, ok := vars["clientToken"]; ok {
-	log.Printf("IP \"%s\" ID \"%s\"", ip, id)
+	log.Printf("client IP \"%s\" ID \"%s\"", ip, id)
 
 	//Check if there is already an assignment
 	var targetNode Node
@@ -207,7 +209,14 @@ func parseToken(token string) (string, string, error) {
 		return "", "", err
 	}
 	log.Printf("Hex token\n %s", hex.Dump(b[:n]))
-
+	log.Printf("Hex length token %d, bytes %d", len(b), n)
+	if n < 40 {
+		//Need to add padding
+		for i := 0; i < 80-len(b); i++ {
+			b = append([]byte{0x00}, b...)
+		}
+		log.Printf("Hex token after padding \n %s", hex.Dump(b[:n]))
+	}
 	iv := b[:LEN_IV]
 	tag := b[LEN_IV : LEN_IV+LEN_TAG]
 	ciphertext := b[LEN_IV+LEN_TAG:]
