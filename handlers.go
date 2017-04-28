@@ -321,6 +321,11 @@ func decryptToken(key []byte, iv []byte, ciphertext []byte) ([]byte, error) {
 
 func Join(w http.ResponseWriter, r *http.Request) {
 	log.Println("Join request")
+
+	if (HoneyApp{}) != MyHoneyApp && MyHoneyApp.RealServer != (Node{}) && MyHoneyApp.HoneyServer != (Node{}) {
+		log.Println("Servers already assigned, ignoring")
+		return
+	}
 	r.ParseForm()
 	pk := r.Form.Get("pk")
 	host := r.Form.Get("host")
